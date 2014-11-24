@@ -38,52 +38,53 @@ if ! ctags --version | grep -q "Exuberant" ; then
   exit 1
 fi
 
-endpath="$HOME/.haskell-vim-now"
+endpath="$HOME/.hvim"
 
-if [ ! -e $endpath/.git ]; then
-  msg "Cloning begriffs/haskell-vim-now"
-  git clone https://github.com/begriffs/haskell-vim-now.git $endpath
+if [ ! -e $endpath ]; then
+  mkdir -p $endpath/.vim
+  cd $endpath
+  git clone -b portable https://github.com/codeswish/haskell-vim-now.git
 else
-  msg "Existing installation detected"
-  msg "Updating from begriffs/haskell-vim-now"
   cd $endpath && git pull
 fi
 
 if [ -e ~/.vim/colors ]; then
   msg "Preserving color scheme files"
-  cp -R ~/.vim/colors $endpath/colors
+  rsync -aq ~/.vim/colors $endpath/.vim/colors
 fi
 
-today=`date +%Y%m%d_%H%M%S`
-msg "Backing up current vim config using timestamp $today"
-for i in $HOME/.vim $HOME/.vimrc $HOME/.gvimrc; do [ -e $i ] && mv $i $i.$today && detail "$i.$today"; done
+#today=`date +%Y%m%d_%H%M%S`
+#msg "Backing up current vim config using timestamp $today"
+#for i in $HOME/.vim $HOME/.vimrc $HOME/.gvimrc; do [ -e $i ] && mv $i $i.$today && detail "$i.$today"; done
 
-msg "Creating symlinks"
-detail "~/.vimrc -> $endpath/.vimrc"
-detail "~/.vim   -> $endpath/.vim"
-ln -sf $endpath/.vimrc $HOME/.vimrc
+#msg "Creating symlinks"
+#detail "~/.vimrc -> $endpath/.vimrc"
+#detail "~/.vim   -> $endpath/.vim"
+ln -sf $endpath/haskell-vim-now/.vimrc $endpath/.vimrc
+
 if [ ! -d $endpath/.vim/bundle ]; then
   mkdir -p $endpath/.vim/bundle
 fi
-ln -sf $endpath/.vim $HOME/.vim
 
-if [ ! -e $HOME/.vim/bundle/vundle ]; then
+#ln -sf $endpath/.vim $endpath/haskell-vim-now/.vim
+
+if [ ! -e $endpath/.vim/bundle/vundle ]; then
   msg "Installing Vundle"
-  git clone http://github.com/gmarik/vundle.git $HOME/.vim/bundle/vundle
+  git clone http://github.com/gmarik/vundle.git $endpath/.vim/bundle/vundle
 fi
 
 msg "Installing plugins using Vundle..."
 vim -T dumb -E -u $endpath/.vimrc +BundleInstall! +BundleClean! +qall
 
 msg "Building vimproc.vim"
-make -C ~/.vim/bundle/vimproc.vim
+make -C $endpath/.vim/bundle/vimproc.vim
 
 msg "Updating cabal package list"
 cabal update
 
 msg "Installing git-hscope"
 mkdir -p $endpath/bin
-cp $endpath/git-hscope $endpath/bin
+rsync -aq $endpath/haskell-vim-now/git-hscope $endpath/bin
 
 function build_shared_binary {
   pkg=$1
@@ -103,7 +104,7 @@ function build_shared_binary {
   cabal install -j --reorder-goals --disable-documentation --datadir=$endpath/data --force-reinstalls "${constraint:-$pkg}"
 
   msg "Saving $pkg binaries"
-  cp .cabal-sandbox/bin/* $endpath/bin
+  rsync -aq .cabal-sandbox/bin/* $endpath/bin
 
   msg "Cleaning up"
   cd -
@@ -121,8 +122,8 @@ build_shared_binary "hoogle"
 msg "Building Hoogle database..."
 $endpath/bin/hoogle data
 
-msg "Setting git to use fully-pathed vim for messages..."
-git config --global core.editor $(which vim)
+#msg "Setting git to use fully-pathed vim for messages..."
+#git config --global core.editor $(which vim)
 
 msg "Configuring codex to search in sandboxes..."
 cat > $HOME/.codex <<EOF

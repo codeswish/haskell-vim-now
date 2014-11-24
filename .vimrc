@@ -1,3 +1,9 @@
+set nocompatible
+
+let &runtimpath = printf('%s/vimfiles,%s,%s/vimfiles/after', $VIM, $VIMRUNTIME, $VIM)
+let s:hvim = expand('<sfile>:p:h')
+let &runtimpath = printf('%s,%s,%s/after', s:hvim, &runtimepath, s:hvim)
+
 " General {{{
 
 " use indentation for folds
@@ -28,7 +34,7 @@ noremap ,, ,
 set formatprg="PARINIT='rTbgqR B=.,?_A_a Q=_s>|' par\ -w72"
 
 " Find custom built ghc-mod, codex etc
-let $PATH = $PATH . ':' . expand("~/.haskell-vim-now/bin")
+let $PATH = $PATH . ':' . expand("~/.hvim/bin")
 
 " Kill the damned Ex mode.
 nnoremap Q <nop>
@@ -37,7 +43,6 @@ nnoremap Q <nop>
 
 " Vundle {{{
 
-set nocompatible
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
 
